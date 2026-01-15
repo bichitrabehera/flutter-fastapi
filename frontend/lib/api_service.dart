@@ -52,7 +52,7 @@ class ApiService {
   }
 
   // PUT /tasks/{id}
-  static Future<void> updateTask(int id, String title, String description) async {
+  static Future<void> updateTask(String id, String title, String description) async {
     final response = await http.put(
       Uri.parse("$baseUrl/tasks/$id"),
       headers: await _authHeader(),
@@ -68,7 +68,7 @@ class ApiService {
   }
 
   // DELETE /tasks/{id}
-  static Future<void> deleteTask(int id) async {
+  static Future<void> deleteTask(String id) async {
     final response = await http.delete(
       Uri.parse("$baseUrl/tasks/$id"),
       headers: await _authHeader(),

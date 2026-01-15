@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            top: 16,
+            top: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 16,
           ),
           child: Column(
@@ -64,15 +64,12 @@ class _HomePageState extends State<HomePage> {
               ElevatedButton(
                 onPressed: () async {
                   if (titleCtrl.text.isEmpty) return;
-                  await ApiService.createTask(
-                    titleCtrl.text,
-                    descCtrl.text,
-                  );
+                  await ApiService.createTask(titleCtrl.text, descCtrl.text);
                   Navigator.pop(context);
                   loadTasks();
                 },
                 child: const Text("Add"),
-              )
+              ),
             ],
           ),
         );
@@ -80,7 +77,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// ---------------- VIEW / UPDATE / DELETE ----------------
   void openTaskDetails(Map task) {
     final titleCtrl = TextEditingController(text: task["title"]);
     final descCtrl = TextEditingController(text: task["description"]);
@@ -115,7 +111,7 @@ class _HomePageState extends State<HomePage> {
                     child: ElevatedButton(
                       onPressed: () async {
                         await ApiService.updateTask(
-                          task["id"],
+                          task["id"].toString(),
                           titleCtrl.text,
                           descCtrl.text,
                         );
@@ -132,7 +128,9 @@ class _HomePageState extends State<HomePage> {
                         backgroundColor: Colors.red,
                       ),
                       onPressed: () async {
-                        await ApiService.deleteTask(task["id"]);
+                        await ApiService.deleteTask(
+                          task["id"],
+                        );
                         Navigator.pop(context);
                         loadTasks();
                       },
@@ -140,7 +138,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         );
@@ -148,7 +146,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// ---------------- UI ----------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,22 +153,32 @@ class _HomePageState extends State<HomePage> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : tasks.isEmpty
-              ? const Center(child: Text("No tasks yet"))
-              : ListView.builder(
-                  itemCount: tasks.length,
-                  itemBuilder: (_, i) {
-                    final task = tasks[i];
-                    return ListTile(
-                      title: Text(task["title"] ?? ""),
-                      subtitle: Text(
-                        task["description"] ?? "",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      onTap: () => openTaskDetails(task),
-                    );
-                  },
-                ),
+          ? const Center(child: Text("No tasks yet"))
+          : ListView.builder(
+              itemCount: tasks.length,
+              itemBuilder: (_, i) {
+                final task = tasks[i];
+                return Card(
+                  shape: RoundedRectangleBorder(
+                    side: const BorderSide(color: Colors.grey, width: 1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: ListTile(
+                    title: Text(task["title"] ?? ""),
+                    subtitle: Text(
+                      task["description"] ?? "",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () => openTaskDetails(task),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: openAddTaskSheet,
         child: const Icon(Icons.add),

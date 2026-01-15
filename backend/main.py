@@ -1,7 +1,8 @@
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from auth import get_user_id
 from pydantic import BaseModel
 from supabase_client import supabase
+from postgrest.exceptions import APIError
 
 app = FastAPI()
 
@@ -15,11 +16,14 @@ class TaskCreate(BaseModel):
 
 @app.post("/tasks")
 def create_task(task: TaskCreate, user_id: str = Depends(get_user_id)):
-    response = supabase.table("tasks").insert({
-        "title": task.title,
-        "description": task.description,
-        "user_id": user_id
-    }).execute()
+    try:
+        response = supabase.table("tasks").insert({
+            "title": task.title,
+            "description": task.description,
+            "user_id": user_id
+        }).execute()
+    except APIError as e:
+        raise HTTPException(status_code=403, detail=e.json())
 
     return {"status": "success", "data": response.data}
 
@@ -39,7 +43,7 @@ class TaskUpdate(BaseModel):
 
 @app.put("/tasks/{task_id}")
 def update_tasks(
-    task_id: int,
+    task_id: str,
     task: TaskUpdate,
     user_id: str = Depends(get_user_id)
 ):
@@ -57,7 +61,7 @@ def update_tasks(
     return {"status": "success", "data": response.data}
 
 @app.delete("/tasks/{task_id}")
-def delete_tasks(task_id: int, user_id: str = Depends(get_user_id)):
+def delete_tasks(task_id: str, user_id: str = Depends(get_user_id)):
     response = supabase.table("tasks") \
         .delete() \
         .eq("id", task_id) \

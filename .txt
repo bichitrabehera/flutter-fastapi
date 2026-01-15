@@ -1,0 +1,34 @@
+https://gkfwqnwxkaohvwyenodb.supabase.co
+
+curl -X POST https://gkfwqnwxkaohvwyenodb.supabase.co/auth/v1/token?grant_type=password `
+ -H "Content-Type: application/json" `
+ -H "apikey: YOUR_ANON_KEY" `
+ -d "{ \"email\": \"daaku1516@gmail.com\", \"password\": \"12345678\" }"
+
+
+$headers = @{
+  "Content-Type" = "application/json"
+  "apikey" = "sb_publishable_seoM14KSCio0QJfNB-YF4g_58SQNWIJ"
+}
+
+$body = @{
+  email = "daaku1516@gmail.com"
+  password = "12345678"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "https://gkfwqnwxkaohvwyenodb.supabase.co/auth/v1/token?grant_type=password" `
+  -Method POST `
+  -Headers $headers `
+  -Body $body
+
+
+
+
+
+
+
+
+
+
+eyJhbGciOiJFUzI1NiIsImtpZCI6IjYxNGExYTc4LThkMDYtNGE3OS05N2YyLTA4ZDMyODBjZmMyOSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2drZndxbnd4a2FvaHZ3eWVub2RiLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3NDVmMDg3Ni1lMWJhLTQ4NzgtODk0Yi04N2QwZmQ5NzhkMTEiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY4MjQxNDQ4LCJpYXQiOjE3NjgyMzc4NDgsImVtYWlsIjoiZGFha3UxNTE2QGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzY4MjM3ODQ4fV0sInNlc3Npb25faWQiOiI0ZjNmMTFhZS0yMGUwLTRmYzgtODRhZC1iNDQzYmZkODNlOWMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.6Cpj2xxYxja8Rhad7n_Qx7UoP3Tzj1izbNJ4XHeqaVvS-i1VdNwLvYd-aPlon-mYegVwKSD0Ft1ajAlsFKQevg
