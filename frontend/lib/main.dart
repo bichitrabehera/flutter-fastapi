@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'login_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() async {
+import 'login_page.dart';
+import 'register_page.dart';
+import 'home_page.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load env file
+  await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
-    url: 'https://gkfwqnwxkaohvwyenodb.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrZndxbnd4a2FvaHZ3eWVub2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMDg5NzYsImV4cCI6MjA4Mzc4NDk3Nn0.TxaKBVelW8j4HhMZf4gDU85M1td5d6OwVRyoJolPcMY',
+    url: dotenv.env["SUPABASE_URL"]!,
+    anonKey: dotenv.env["SUPABASE_ANON_KEY"]!,
   );
 
   runApp(const MyApp());
@@ -20,10 +27,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      home: const AuthGate(),
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegisterPage(),
+        '/home': (context) => const HomePage(),
+      },
     );
-    return const MaterialApp(
-      home: LoginPage(),
-    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
+    return session != null ? const HomePage() : const LoginPage();
   }
 }
