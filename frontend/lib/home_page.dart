@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'api_service.dart';
+import 'add_task_page.dart';
+import 'view_task_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -19,6 +22,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> loadTasks() async {
+    setState(() => loading = true);
+
     try {
       final data = await ApiService.getTasks();
       if (!mounted) return;
@@ -30,6 +35,34 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       setState(() => loading = false);
     }
+  }
+
+  // Priority dot color
+  Color priorityColor(String value) {
+    if (value == "high") return Colors.red;
+    if (value == "low") return Colors.green;
+    return Colors.orange;
+  }
+
+  // Due date text
+  String formatDueDate(dynamic raw) {
+    if (raw == null) return "";
+    final d = DateTime.parse(raw).toLocal();
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ];
+    return "${d.day} ${months[d.month - 1]}";
   }
 
   void logout() async {
@@ -46,9 +79,7 @@ class _HomePageState extends State<HomePage> {
           ),
           TextButton(
             onPressed: () async {
-              // Sign out from Supabase
               await Supabase.instance.client.auth.signOut();
-
               if (!mounted) return;
               Navigator.pop(context);
               Navigator.pushNamedAndRemoveUntil(
@@ -64,217 +95,57 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// ---------------- ADD TASK ----------------
-  void openAddTaskSheet() {
-    final titleCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Add New Task",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: titleCtrl,
-                decoration: InputDecoration(
-                  labelText: "Title",
-                  prefixIcon: const Icon(Icons.title),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descCtrl,
-                decoration: InputDecoration(
-                  labelText: "Description",
-                  prefixIcon: const Icon(Icons.description_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () async {
-                  if (titleCtrl.text.isEmpty) return;
-                  await ApiService.createTask(titleCtrl.text, descCtrl.text);
-                  if (!mounted) return;
-                  Navigator.pop(context);
-                  loadTasks();
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  "Add Task",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+  // OPEN ADD PAGE
+  Future<void> openAddPage() async {
+    final refresh = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddTaskPage()),
     );
+
+    if (refresh == true) {
+      loadTasks();
+    }
   }
 
-  void openTaskDetails(Map task) {
-    final titleCtrl = TextEditingController(text: task["title"]);
-    final descCtrl = TextEditingController(text: task["description"]);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Task Details",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: titleCtrl,
-                decoration: InputDecoration(
-                  labelText: "Title",
-                  prefixIcon: const Icon(Icons.title),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descCtrl,
-                decoration: InputDecoration(
-                  labelText: "Description",
-                  prefixIcon: const Icon(Icons.description_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await ApiService.updateTask(
-                          task["id"].toString(),
-                          titleCtrl.text,
-                          descCtrl.text,
-                        );
-                        if (!mounted) return;
-                        Navigator.pop(context);
-                        loadTasks();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        "Save",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        await ApiService.deleteTask(task["id"]);
-                        if (!mounted) return;
-                        Navigator.pop(context);
-                        loadTasks();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: const BorderSide(color: Colors.red),
-                        foregroundColor: Colors.red,
-                      ),
-                      child: const Text(
-                        "Delete",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+  // OPEN VIEW PAGE
+  Future<void> openViewPage(Map task) async {
+    final refresh = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ViewTaskPage(task: task)),
     );
+
+    if (refresh == true) {
+      loadTasks();
+    }
+  }
+
+  // TOGGLE COMPLETED
+  Future<void> toggleCompleted(Map task) async {
+    final bool current = task["completed"] ?? false;
+
+    setState(() {
+      task["completed"] = !current;
+    });
+
+    try {
+      await ApiService.toggleTaskCompletion(task["id"].toString(), !current);
+    } catch (_) {
+      setState(() {
+        task["completed"] = current;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFFDF7FF),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFFDF7FF),
         elevation: 0,
-        backgroundColor: Colors.white,
         title: const Text(
           "My Tasks",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
@@ -288,83 +159,126 @@ class _HomePageState extends State<HomePage> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : tasks.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.task_alt, size: 80, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  Text(
-                    "No tasks yet",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Tap + to create your first task",
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: tasks.length,
-              itemBuilder: (_, i) {
-                final task = tasks[i];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.task_alt, size: 80, color: Colors.grey[300]),
+                      const SizedBox(height: 16),
+                      Text(
+                        "No tasks yet",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Tap + to create your first task",
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    title: Text(
-                      task["title"] ?? "",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: tasks.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: Colors.grey[300]),
+                  itemBuilder: (_, i) {
+                    final task = tasks[i];
+                    final bool completed = task["completed"] ?? false;
+
+                    final String pr =
+                        (task["priority"] ?? "medium").toString();
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
                       ),
-                    ),
-                    subtitle: task["description"]?.isNotEmpty == true
-                        ? Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              task["description"] ?? "",
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.grey[600]),
+                      leading: Checkbox(
+                        value: completed,
+                        onChanged: (_) => toggleCompleted(task),
+                      ),
+
+                      // UPDATED TITLE ROW
+                      title: Row(
+                        children: [
+                          // Priority dot
+                          Container(
+                            height: 9,
+                            width: 9,
+                            decoration: BoxDecoration(
+                              color: priorityColor(pr),
+                              shape: BoxShape.circle,
                             ),
-                          )
-                        : null,
-                    trailing: Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey[400],
-                    ),
-                    onTap: () => openTaskDetails(task),
-                  ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: openAddTaskSheet,
-        icon: const Icon(Icons.add),
-        label: const Text("Add Task"),
-        elevation: 2,
+                          ),
+                          const SizedBox(width: 10),
+
+                          // Title
+                          Expanded(
+                            child: Text(
+                              task["title"] ?? "",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                decoration: completed
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                                color: completed
+                                    ? Colors.grey[600]
+                                    : Colors.black87,
+                              ),
+                            ),
+                          ),
+
+                          // Due date chip
+                          if (task["due_date"] != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.06),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                formatDueDate(task["due_date"]),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+
+                      subtitle: task["description"]?.isNotEmpty == true
+                          ? Text(
+                              task["description"] ?? "",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: completed
+                                    ? Colors.grey[500]
+                                    : Colors.grey[700],
+                              ),
+                            )
+                          : null,
+                      trailing:
+                          Icon(Icons.chevron_right, color: Colors.grey[500]),
+                      onTap: () => openViewPage(task),
+                    );
+                  },
+                ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: openAddPage,
+        backgroundColor: const Color(0xFF1A73E8),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
